@@ -1,0 +1,6 @@
+question,answer
+Amazon Connect Chat是什么?,Amazon Connect Chat是AWS提供的云端客户服务聊天解决方案，支持实时文本对话和多媒体消息。
+如何配置Connect Chat?,在配置面板中设置正确的Region、API URL和Snippet ID，然后保存配置即可开始使用。
+Connect Chat支持哪些功能?,支持实时消息、文件传输、表情符号、Markdown格式、聊天历史记录和多参与者对话。
+聊天会话如何管理?,系统自动管理会话生命周期，支持会话恢复、超时处理和优雅断开连接。
+如何集成到现有系统?,通过Amazon Connect ChatJS SDK可以轻松集成到网站或应用中，支持自定义UI和业务逻辑。

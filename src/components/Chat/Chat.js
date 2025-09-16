@@ -45,7 +45,7 @@ const ChatComposerWrapper = styled.div`
   padding: 0;
   display: flex;
   flex-direction: column;
-  height: 340px;
+  flex: 1;
   @media (max-width:640px) {
     position: absolute;
     left: 0;
@@ -54,6 +54,18 @@ const ChatComposerWrapper = styled.div`
     top: ${props => props.parentHeaderWrapperHeight}px;
     min-height: auto;
   }
+`;
+
+const ChatTranscriptorWrapper = styled.div`
+  flex: 1;
+  overflow: hidden;
+`;
+
+const ChatComposerFixedWrapper = styled.div`
+  flex-shrink: 0;
+  min-height: 60px;
+  max-height: 120px;
+  overflow: visible;
 `;
 
 const HeaderWrapper = styled.div`
@@ -204,27 +216,31 @@ export default class Chat extends Component {
           <ParentHeaderWrapper ref={this.parentHeaderRef}><Header headerConfig={headerConfig}/></ParentHeaderWrapper>
         }
         <ChatComposerWrapper  parentHeaderWrapperHeight={this.state.parentHeaderWrapperHeight}>
-          <ChatTranscriptor
-            loadPreviousTranscript={() => chatSession.loadPreviousTranscript()}
-            addMessage={(data) => chatSession.addOutgoingMessage(data)}
-            downloadAttachment={(attachmentId) => chatSession.downloadAttachment(attachmentId)}
-            transcript={this.state.transcript}
-            typingParticipants={this.state.typingParticipants}
-            contactStatus={this.state.contactStatus}
-            contactId={chatSession.contactId}
-            transcriptConfig={transcriptConfig}
-            textInputRef={textInputRef}
-            sendReadReceipt={(...inputParams) => chatSession.sendReadReceipt(...inputParams)}
-          />
-          <ChatComposer
-            contactStatus={this.state.contactStatus}
-            contactId={chatSession.contactId}
-            addMessage={(contactId, data) => chatSession.addOutgoingMessage(data)}
-            addAttachment={(contactId, attachment) => chatSession.addOutgoingAttachment(attachment)}
-            onTyping={() => chatSession.sendTypingEvent()}
-            composerConfig={composerConfig}
-            textInputRef={textInputRef}
-          />
+          <ChatTranscriptorWrapper>
+            <ChatTranscriptor
+              loadPreviousTranscript={() => chatSession.loadPreviousTranscript()}
+              addMessage={(data) => chatSession.addOutgoingMessage(data)}
+              downloadAttachment={(attachmentId) => chatSession.downloadAttachment(attachmentId)}
+              transcript={this.state.transcript}
+              typingParticipants={this.state.typingParticipants}
+              contactStatus={this.state.contactStatus}
+              contactId={chatSession.contactId}
+              transcriptConfig={transcriptConfig}
+              textInputRef={textInputRef}
+              sendReadReceipt={(...inputParams) => chatSession.sendReadReceipt(...inputParams)}
+            />
+          </ChatTranscriptorWrapper>
+          <ChatComposerFixedWrapper>
+            <ChatComposer
+              contactStatus={this.state.contactStatus}
+              contactId={chatSession.contactId}
+              addMessage={(contactId, data) => chatSession.addOutgoingMessage(data)}
+              addAttachment={(contactId, attachment) => chatSession.addOutgoingAttachment(attachment)}
+              onTyping={() => chatSession.sendTypingEvent()}
+              composerConfig={composerConfig}
+              textInputRef={textInputRef}
+            />
+          </ChatComposerFixedWrapper>
         </ChatComposerWrapper>
         {<ChatActionBar
           onEndChat={() => this.endChat()}

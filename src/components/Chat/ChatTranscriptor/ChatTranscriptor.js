@@ -33,6 +33,20 @@ const ContainerWrapper = styled.div`
     sans-serif;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+  }
 `;
 
 const FAQHeader = styled.div`
@@ -72,37 +86,22 @@ const FAQPanel = styled.div`
   transition: max-height 0.3s ease;
   background: #ffffff;
   border-bottom: ${(props) => (props.expanded ? "1px solid #e5e5e5" : "none")};
+  flex-shrink: 0;
 `;
 
 const FAQContent = styled.div`
-  max-height: 250px;
-  overflow-y: auto;
-
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 2px;
-  }
+  padding: 16px;
 `;
 
 const MainContent = styled.div`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+  flex-shrink: 0;
 `;
 
-const TranscriptWrapper = styled(ChatTranscriptScroller)`
+const TranscriptWrapper = styled.div`
   background: ${(props) => props.theme.chatTranscriptor.background};
   -webkit-text-size-adjust: none;
   text-size-adjust: none;
-  flex: 12 1 auto;
+  padding: 16px;
 `;
 
 const FAQContainer = styled.div`
@@ -149,9 +148,10 @@ export default class ChatTranscriptor extends PureComponent {
   constructor(props) {
     super(props);
     this.state = {
-      faqExpanded: false,
+      faqExpanded: true,
       hasFAQFile: false,
     };
+    this.containerRef = React.createRef();
   }
 
   static propTypes = {
@@ -165,7 +165,20 @@ export default class ChatTranscriptor extends PureComponent {
 
   componentDidMount() {
     this.checkFAQFile();
+    this.scrollToBottom();
   }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.transcript.length !== this.props.transcript.length) {
+      this.scrollToBottom();
+    }
+  }
+
+  scrollToBottom = () => {
+    if (this.containerRef.current) {
+      this.containerRef.current.scrollTop = this.containerRef.current.scrollHeight;
+    }
+  };
 
   checkFAQFile = async () => {
     try {
@@ -310,12 +323,7 @@ export default class ChatTranscriptor extends PureComponent {
     const lastMessageIndex = this.props.transcript.length - 1;
 
     const chatContent = (
-      <TranscriptWrapper
-        contactId={this.props.contactId}
-        type={this.props.contactStatus}
-        loadPreviousTranscript={this.loadTranscript}
-        lastSentMessageId={lastSentMessage ? lastSentMessage.id : null}
-      >
+      <TranscriptWrapper>
         {(this.props.contactStatus === CONTACT_STATUS.CONNECTED ||
           this.props.contactStatus === CONTACT_STATUS.ACW ||
           this.props.contactStatus === CONTACT_STATUS.ENDED) && (
@@ -332,18 +340,22 @@ export default class ChatTranscriptor extends PureComponent {
     );
 
     if (!this.state.hasFAQFile) {
-      return chatContent;
+      return (
+        <ContainerWrapper ref={this.containerRef}>
+          {chatContent}
+        </ContainerWrapper>
+      );
     }
 
     return (
-      <ContainerWrapper>
+      <ContainerWrapper ref={this.containerRef}>
         <FAQHeader onClick={this.toggleFAQ}>
           <FAQHeaderContent>
             <FAQTitle>FAQ</FAQTitle>
             <FAQArrow expanded={this.state.faqExpanded}>▶</FAQArrow>
           </FAQHeaderContent>
         </FAQHeader>
-        <FAQPanel expanded={!this.state.faqExpanded}>
+        <FAQPanel expanded={this.state.faqExpanded}>
           <FAQContent>
             <FAQComponent />
           </FAQContent>

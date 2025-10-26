@@ -217,13 +217,37 @@ export default class ChatTranscriptor extends PureComponent {
     });
   };
 
+  isImageUrl = (url) => {
+    const imageExtensions = /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i;
+    return imageExtensions.test(url);
+  };
+
+  processMessageContent = (itemDetails) => {
+    if (!itemDetails.content || !itemDetails.content.data) {
+      return itemDetails;
+    }
+
+    const text = itemDetails.content.data.trim();
+    
+    if (this.isImageUrl(text)) {
+      return {
+        ...itemDetails,
+        isImageMessage: true,
+        imageUrl: text,
+      };
+    }
+
+    return itemDetails;
+  };
+
   renderMessage = (itemDetails, isLatestMessage) => {
-    const itemId = itemDetails.id;
-    const version = itemDetails.version;
+    const processedItemDetails = this.processMessageContent(itemDetails);
+    const itemId = processedItemDetails.id;
+    const version = processedItemDetails.version;
     const messageReceiptType =
-      itemDetails.transportDetails &&
-      itemDetails.transportDetails.messageReceiptType
-        ? itemDetails.transportDetails.messageReceiptType
+      processedItemDetails.transportDetails &&
+      processedItemDetails.transportDetails.messageReceiptType
+        ? processedItemDetails.transportDetails.messageReceiptType
         : "";
     const key = `${itemId}.${version}.${messageReceiptType}`;
 
@@ -240,16 +264,34 @@ export default class ChatTranscriptor extends PureComponent {
     let content = null;
     let additionalProps = {};
 
+    if (processedItemDetails.isImageMessage) {
+      const fileName = processedItemDetails.imageUrl.split('/').pop();
+      content = (
+        <div>
+          <img 
+            src={processedItemDetails.imageUrl} 
+            alt="" 
+            style={{ maxWidth: '100%', height: 'auto', borderRadius: '4px', margin: '4px 0' }} 
+          />
+          <div>
+            <a href={processedItemDetails.imageUrl} target="_blank" rel="noopener noreferrer">
+              {fileName}
+            </a>
+          </div>
+        </div>
+      );
+    }
+
     if (config.render) {
       content = config.render({
         key: key,
-        messageDetails: itemDetails,
+        messageDetails: processedItemDetails,
       });
     }
 
     let textAlign = "left";
 
-    if (itemDetails.type === PARTICIPANT_MESSAGE) {
+    if (processedItemDetails.type === PARTICIPANT_MESSAGE) {
       config = Object.assign(
         {},
         config,
@@ -264,7 +306,7 @@ export default class ChatTranscriptor extends PureComponent {
         isLatestMessage,
         sendReadReceipt: this.props.sendReadReceipt,
       };
-    } else if (itemDetails.type === ATTACHMENT_MESSAGE) {
+    } else if (processedItemDetails.type === ATTACHMENT_MESSAGE) {
       config = Object.assign(
         {},
         config,
@@ -277,7 +319,7 @@ export default class ChatTranscriptor extends PureComponent {
         isLatestMessage,
         sendReadReceipt: this.props.sendReadReceipt,
       };
-    } else if (modelUtils.isRecognizedEvent(itemDetails.content.type)) {
+    } else if (modelUtils.isRecognizedEvent(processedItemDetails.content.type)) {
       config = Object.assign({}, config, transcriptConfig.systemMessageConfig);
       textAlign = "center";
     } else {
@@ -286,7 +328,7 @@ export default class ChatTranscriptor extends PureComponent {
     if (!content && config && config.render) {
       content = config.render({
         key: key,
-        messageDetails: itemDetails,
+        messageDetails: processedItemDetails,
         ...additionalProps,
       });
     }

@@ -218,7 +218,7 @@ export default class ChatTranscriptor extends PureComponent {
   };
 
   isImageUrl = (url) => {
-    const imageExtensions = /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i;
+    const imageExtensions = /\.(jpg|jpeg|png|gif|bmp|webp|svg)(\?.*)?$/i;
     return imageExtensions.test(url);
   };
 
@@ -228,12 +228,13 @@ export default class ChatTranscriptor extends PureComponent {
     }
 
     const text = itemDetails.content.data.trim();
+    const urls = text.split(',').map(u => u.trim()).filter(u => this.isImageUrl(u));
     
-    if (this.isImageUrl(text)) {
+    if (urls.length > 0) {
       return {
         ...itemDetails,
         isImageMessage: true,
-        imageUrl: text,
+        imageUrls: urls,
       };
     }
 
@@ -265,24 +266,28 @@ export default class ChatTranscriptor extends PureComponent {
     let additionalProps = {};
 
     if (processedItemDetails.isImageMessage) {
-      const fileName = processedItemDetails.imageUrl.split('/').pop();
       content = (
         <div>
-          <img 
-            src={processedItemDetails.imageUrl} 
-            alt="" 
-            style={{ maxWidth: '100%', height: 'auto', borderRadius: '4px', margin: '4px 0' }} 
-          />
-          <div>
-            <a href={processedItemDetails.imageUrl} target="_blank" rel="noopener noreferrer">
-              {fileName}
-            </a>
-          </div>
+          {processedItemDetails.imageUrls.map((url, idx) => {
+            const fileName = url.split('/').pop().split('?')[0];
+            return (
+              <div key={idx} style={{ marginBottom: '8px' }}>
+                <img 
+                  src={url} 
+                  alt="" 
+                  style={{ maxWidth: '100%', height: 'auto', borderRadius: '4px', margin: '4px 0' }} 
+                />
+                <div>
+                  <a href={url} target="_blank" rel="noopener noreferrer">
+                    {fileName}
+                  </a>
+                </div>
+              </div>
+            );
+          })}
         </div>
       );
-    }
-
-    if (config.render) {
+    } else if (config.render) {
       content = config.render({
         key: key,
         messageDetails: processedItemDetails,
